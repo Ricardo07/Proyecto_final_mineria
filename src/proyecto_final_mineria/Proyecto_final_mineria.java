@@ -1,5 +1,7 @@
 package proyecto_final_mineria;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -220,6 +222,89 @@ public class Proyecto_final_mineria {
        avg_resultant_acceleration /= eje_x.length;
        return avg_resultant_acceleration;
    }
+   
+  /*
+   Estas funciones son para leer los datos originales del archivo arff
+   y poder comprobar si todos los cálculos de las funciones están bien. 
+   */
+   public static String[] leer_raw_arff(int numero_de_filas) {
+
+        String path = "/Users/ricardo/Desktop/WISDM_ar_v1.1_raw.txt";//Ruta absoluta del archivo
+        String[] resultado = new String[numero_de_filas];
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(path));
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            //Leer el numero de filas deseado 
+            for (int i = 0; i < numero_de_filas && (line != null); i++) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+
+            String everything = sb.toString();//Crear el String completo
+            br.close();//cerrar el archivo
+
+            resultado = everything.split("\n");//convertir el String a un arreglo de Strings
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return resultado;
+    }
+    
+    public static long[] timestamp_del_arreglo(String[] lineas_del_archivo,int size){
+        
+        long[] resultado = new long[size];
+        
+        try{         
+            for (int i = 0; i < size; i++) {
+                String[] fila = lineas_del_archivo[i].split(",");
+                resultado[i] = Long.parseLong(fila[2]);
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Error de conversión");
+        }
+        
+        return resultado;
+    }
+    
+    public static float[] lecturas_archivo_en_eje(String eje,String[] lineas_del_archivo){
+        
+        float[] valores_del_eje = new float[200];
+        
+        int indice_a_leer = 0;
+        
+        switch (eje) {
+            case "x":
+                indice_a_leer = 3;
+                break;
+            case "y":
+                indice_a_leer = 4;
+                break;
+            case "z":
+                indice_a_leer = 5;
+                break;
+            default:
+                return null;
+        }
+        
+        try {
+            
+            for (int i = 0; i < 200; i++){
+                String[] fila = lineas_del_archivo[i].split(",");
+                valores_del_eje[i] = Float.parseFloat(fila[indice_a_leer]);
+            } 
+                
+        } catch (NumberFormatException e) {
+            System.out.println("Error de conversión");
+        }
+        
+        return valores_del_eje;
+    } 
     
 }
 
