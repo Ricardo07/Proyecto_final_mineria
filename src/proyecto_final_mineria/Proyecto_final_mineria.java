@@ -19,6 +19,7 @@ public class Proyecto_final_mineria {
         int puerto = 1085;
         int size = 111;
         int numero_de_instancias = 200;
+        //System.out.print("PROBANDO");
 
         try {
             // La IP es la local, el puerto es en el que el servidor esté escuchando.
@@ -89,7 +90,7 @@ public class Proyecto_final_mineria {
         } catch (Exception e) {
             e.printStackTrace();
         }
-       
+
     }
     
     
@@ -172,6 +173,52 @@ public class Proyecto_final_mineria {
        resultado /= (indices_de_picos_dentro_del_umbral.size()-1);
           
        return 0.0f;
+   }
+
+   public static float get_avg(float[] lecturas_del_eje)
+   {
+       float avg = 0;
+
+       //foreach en java
+       for(float i : lecturas_del_eje)
+           avg += i;
+       avg /= lecturas_del_eje.length;
+       return avg;
+   }
+
+   public static float get_std_deviation(float[] lecturas_del_eje)
+   {
+       //primero calculamos el average
+       float avg = get_avg(lecturas_del_eje);
+
+       //luego calculamos la diferencia de cada valor con el avg y se eleva al cuadrado
+       float std_dev = 0;
+       for(float i : lecturas_del_eje)
+           std_dev += Math.pow((i - avg), 2);
+
+       //luego se le saca el average nuevamente y se le saca la raiz cuadrada.
+       std_dev = (float)Math.sqrt((std_dev/lecturas_del_eje.length));
+       return std_dev;
+   }
+
+   public static float get_avg_absolute_difference(float[] lecturas_del_eje)
+   {
+       //se calcula el average de las 200 medidas del eje a analizar
+       float avg = get_avg(lecturas_del_eje);
+       float abs_avg_diff = 0;
+       for(float i : lecturas_del_eje)
+           abs_avg_diff += Math.abs((i - avg));
+       abs_avg_diff/=lecturas_del_eje.length;
+       return abs_avg_diff;
+   }
+
+   public static float get_avg_resultant_acceleration(float[] eje_x, float[] eje_y, float[] eje_z)
+   {
+       float avg_resultant_acceleration = 0;
+       for (int i = 0; i < eje_x.length; i++)
+           avg_resultant_acceleration += Math.sqrt( (Math.pow(eje_x[i],2) + Math.pow(eje_y[i],2) + Math.pow(eje_z[i],2)));
+       avg_resultant_acceleration /= eje_x.length;
+       return avg_resultant_acceleration;
    }
     
 }
