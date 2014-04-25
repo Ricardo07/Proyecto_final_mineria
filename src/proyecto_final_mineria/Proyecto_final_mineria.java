@@ -24,6 +24,8 @@ public class Proyecto_final_mineria {
         //System.out.print("PROBANDO");
 
         try {
+            
+            probando_con_el_archivo();
             // La IP es la local, el puerto es en el que el servidor esté escuchando.
             DatagramSocket socket = new DatagramSocket(puerto);
 
@@ -134,14 +136,15 @@ public class Proyecto_final_mineria {
                    bins[9]++;
                    break;
                }
-               else if(lecturas_del_eje[i] >= (rango_maxmin[1]+(j*rango)) && lecturas_del_eje[i] < (rango_maxmin[1]+((j+1)*rango))){
-                   bins[j]= bins[j]+1;
+               else if(lecturas_del_eje[i] > (rango_maxmin[1]+(j*rango)) && lecturas_del_eje[i] < (rango_maxmin[1]+((j+1)*rango))){
+                   bins[j] += 1;//bins[j]= bins[j]+1;
                    break;
                }
            }
        }
        
-       for(int i=0;i<10;i++) bins[i]= bins[i]/200;
+       System.out.println("verificando");
+       for(int i=0;i<10;i++) bins[i]/= 200;
        return bins; 
    }
    
@@ -256,14 +259,15 @@ public class Proyecto_final_mineria {
         return resultado;
     }
     
-    public static long[] timestamp_del_arreglo(String[] lineas_del_archivo,int size){
+    public static long[] timestamp_del_arreglo(){
         
-        long[] resultado = new long[size];
+        String[] lineas_del_archivo = leer_raw_arff(200);
+        long[] resultado = new long[lineas_del_archivo.length];
         
         try{         
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < lineas_del_archivo.length; i++) {
                 String[] fila = lineas_del_archivo[i].split(",");
-                resultado[i] = Long.parseLong(fila[2]);
+                resultado[i] = Long.parseLong(fila[2]);//en el archivo el indice #2 es el timestamp
             }
         } catch (NumberFormatException e) {
             System.out.println("Error de conversión");
@@ -272,9 +276,10 @@ public class Proyecto_final_mineria {
         return resultado;
     }
     
-    public static float[] lecturas_archivo_en_eje(String eje,String[] lineas_del_archivo){
+    public static float[] lecturas_archivo_del_eje(String eje){
         
-        float[] valores_del_eje = new float[200];
+        String[] lineas_del_archivo = leer_raw_arff(200);
+        float[] valores_del_eje = new float[lineas_del_archivo.length];
         
         int indice_a_leer = 0;
         
@@ -294,17 +299,62 @@ public class Proyecto_final_mineria {
         
         try {
             
-            for (int i = 0; i < 200; i++){
+            for (int i = 0; i < lineas_del_archivo.length; i++){
                 String[] fila = lineas_del_archivo[i].split(",");
-                valores_del_eje[i] = Float.parseFloat(fila[indice_a_leer]);
-            } 
+                String str = fila[indice_a_leer];
                 
+                if (str.length() > 0 && str.charAt(str.length()-1)==';') 
+                    str = str.substring(0, str.length()-1);
+ 
+                valores_del_eje[i] = Float.parseFloat(str);
+            } 
+            System.out.println(".");    
         } catch (NumberFormatException e) {
             System.out.println("Error de conversión");
         }
         
         return valores_del_eje;
-    } 
+    }
+    
+    public static void probando_con_el_archivo(){
+        
+        //Sacar los bins
+        float[] accelerometer_x = lecturas_archivo_del_eje("x");
+        float[] accelerometer_y = lecturas_archivo_del_eje("y");
+        float[] accelerometer_z = lecturas_archivo_del_eje("z");
+        
+        /*
+        ARREGLAR FUNCION BINS
+        */
+        float[] bins_x = bins(maxmin(accelerometer_x),accelerometer_x);
+        float[] bins_y = bins(maxmin(accelerometer_y),accelerometer_y);
+        float[] bins_z = bins(maxmin(accelerometer_z),accelerometer_z);
+        
+        float pico_en_X = maxmin(accelerometer_x)[0];
+        float pico_en_Y = maxmin(accelerometer_y)[0];
+        float pico_en_Z = maxmin(accelerometer_z)[0];
+        
+        float avg_x = get_avg(accelerometer_x);
+        float avg_y = get_avg(accelerometer_y);
+        float avg_z = get_avg(accelerometer_z);
+        
+        long[] tiempos = timestamp_del_arreglo();
+        
+        /*
+        ARREGLAR FUNCION TIEMPOS
+        */
+        float tiempo_X = tiempo_entre_picos(accelerometer_x,tiempos);
+        float tiempo_Y = tiempo_entre_picos(accelerometer_y,tiempos);
+        float tiempo_Z = tiempo_entre_picos(accelerometer_z,tiempos);
+        
+        float std_deviation_x = get_std_deviation(accelerometer_x);
+        
+        
+        
+        System.out.println("Debe funcionar!");
+        
+    }
+    
     
 }
 
