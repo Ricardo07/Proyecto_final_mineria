@@ -114,7 +114,7 @@ public class Proyecto_final_mineria {
        }
        return resultados;
    }
-   
+       
    public static float[] bins(float[] rango_maxmin, float[] lecturas_del_eje){
        
        float[] bins = new float[10];
@@ -137,47 +137,57 @@ public class Proyecto_final_mineria {
                    break;
                }
                else if(lecturas_del_eje[i] > (rango_maxmin[1]+(j*rango)) && lecturas_del_eje[i] < (rango_maxmin[1]+((j+1)*rango))){
-                   bins[j] += 1;//bins[j]= bins[j]+1;
+                   bins[j] += 1;
                    break;
                }
            }
        }
        
-       System.out.println("verificando");
        for(int i=0;i<10;i++) bins[i]/= 200;
        return bins; 
    }
    
    public static float tiempo_entre_picos(float[] lecturas_del_eje,long[] tiempos)
    {
-       
-       float variacion_de_umbral = 0.05f;
+       long resultado = 0;
+       int iteraciones_umbral= 0;
        
        float[] extremos = maxmin(lecturas_del_eje);
-       
-       
+       float variacion_de_umbral = extremos[0]*0.10f;
        
        List indices_de_picos_dentro_del_umbral = new LinkedList();
-       for(float i =(extremos[0]-variacion_de_umbral) ; i >= extremos[1] ;i = (i-variacion_de_umbral) ){
-           for(int j=0;j<lecturas_del_eje.length;j++){
+       
+       for(float umbral =(extremos[0]-variacion_de_umbral) ; umbral >= extremos[1] ; umbral -= variacion_de_umbral ){
+           
+           for(int j=0;j<lecturas_del_eje.length;j++){ // j indice de los valores de los tiempos 
                
-               if(lecturas_del_eje[j] >= i /*&& !indices_de_picos_dentro_del_umbral.contains(j)*/)
-                   indices_de_picos_dentro_del_umbral.add(j);
+               if(lecturas_del_eje[j] >= umbral /*&& !indices_de_picos_dentro_del_umbral.contains(j)*/)
+                   indices_de_picos_dentro_del_umbral.add(j);//Se encontró un valor mayor al umbra, añadie el indice a la lista
             }
            
-           if(indices_de_picos_dentro_del_umbral.size() >= 3)
+           iteraciones_umbral++;
+           
+           if(indices_de_picos_dentro_del_umbral.size() >= 3)//si la lista contiene por lo menos 3 valores mayores al umbral, pasar al siguiente paso
                break;
            else
                indices_de_picos_dentro_del_umbral.clear();//borrar los valores, para que entre de izquierda a derecha
        }
        
-       long resultado = 0;
-       for(int i=0;i<indices_de_picos_dentro_del_umbral.size()-1;i++)
-           resultado += (tiempos[i+1]-tiempos[i]);
+       int[] indices = new int[indices_de_picos_dentro_del_umbral.size()];
        
-       resultado /= (indices_de_picos_dentro_del_umbral.size()-1);
+       //sacando los indices de la lista y convirtiendolos en un arrelgo de enteros
+       for (int i = 0; i <indices_de_picos_dentro_del_umbral.size() ; i++) {
+           indices[i] = Integer.parseInt(indices_de_picos_dentro_del_umbral.get(i).toString());
+           System.out.println("---->"+indices[i]);//Probando
+       }
+       
+       for(int i=0;i<indices.length-1;i++)
+           resultado += (tiempos[indices[i+1]]-tiempos[indices[i]]);//siguiente - actual
+       
+       resultado /= (indices.length)*1000000;//dividiendo entre el numero de picos
           
-       return 0.0f;
+       System.out.println("Debuging");
+       return resultado;
    }
 
    public static float get_avg(float[] lecturas_del_eje)
@@ -188,6 +198,9 @@ public class Proyecto_final_mineria {
        for(float i : lecturas_del_eje)
            avg += i;
        avg /= lecturas_del_eje.length;
+       
+       avg = avg<0 ? 0: avg; //si es negativo ponerlo en 0, de lo contrario dejarlo igual.
+       
        return avg;
    }
 
@@ -318,21 +331,14 @@ public class Proyecto_final_mineria {
     
     public static void probando_con_el_archivo(){
         
-        //Sacar los bins
+        
         float[] accelerometer_x = lecturas_archivo_del_eje("x");
         float[] accelerometer_y = lecturas_archivo_del_eje("y");
         float[] accelerometer_z = lecturas_archivo_del_eje("z");
         
-        /*
-        ARREGLAR FUNCION BINS
-        */
         float[] bins_x = bins(maxmin(accelerometer_x),accelerometer_x);
         float[] bins_y = bins(maxmin(accelerometer_y),accelerometer_y);
         float[] bins_z = bins(maxmin(accelerometer_z),accelerometer_z);
-        
-        float pico_en_X = maxmin(accelerometer_x)[0];
-        float pico_en_Y = maxmin(accelerometer_y)[0];
-        float pico_en_Z = maxmin(accelerometer_z)[0];
         
         float avg_x = get_avg(accelerometer_x);
         float avg_y = get_avg(accelerometer_y);
@@ -340,16 +346,19 @@ public class Proyecto_final_mineria {
         
         long[] tiempos = timestamp_del_arreglo();
         
-        /*
-        ARREGLAR FUNCION TIEMPOS
-        */
-        float tiempo_X = tiempo_entre_picos(accelerometer_x,tiempos);
-        float tiempo_Y = tiempo_entre_picos(accelerometer_y,tiempos);
-        float tiempo_Z = tiempo_entre_picos(accelerometer_z,tiempos);
+        float pico_X = tiempo_entre_picos(accelerometer_x,tiempos);
+        float pico_Y = tiempo_entre_picos(accelerometer_y,tiempos);
+        float pico_Z = tiempo_entre_picos(accelerometer_z,tiempos);
         
         float std_deviation_x = get_std_deviation(accelerometer_x);
+        float std_deviation_y = get_std_deviation(accelerometer_y);
+        float std_deviation_z = get_std_deviation(accelerometer_z);
         
-        
+        float avg_absolute_diff_X = get_avg_absolute_difference(accelerometer_x);
+        float avg_absolute_diff_Y = get_avg_absolute_difference(accelerometer_y);
+        float avg_absolute_diff_Z = get_avg_absolute_difference(accelerometer_z);
+                
+        float avg_resultant = get_avg_resultant_acceleration(accelerometer_x,accelerometer_y,accelerometer_z);
         
         System.out.println("Debe funcionar!");
         
