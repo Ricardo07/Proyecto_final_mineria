@@ -8,6 +8,9 @@ import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import weka.classifiers.trees.J48;
+import weka.core.Instance;
+import weka.core.Instances;
 
 
 /**
@@ -15,82 +18,142 @@ import java.util.List;
  * @author ricardo
  */
 public class Proyecto_final_mineria {
+    
+    static BufferedReader reader;
+    static Instances data ;
+    static J48 tree;
 
     public static void main(String[] args) {
         
         int puerto = 1085;
         int size = 111;
         int numero_de_instancias = 200;
-        //System.out.print("PROBANDO");
+        
+        float[] accelerometer_x_array = new float[numero_de_instancias];
+        float[] accelerometer_y_array = new float[numero_de_instancias];
+        float[] accelerometer_z_array = new float[numero_de_instancias];
+
+        long[] tiempo_de_lecturas = new long[numero_de_instancias];
+        
+        //inicializando API de weka construyendo el arbol J48 unpruned
+        inicializando_weka();
 
         try {
             
-            probando_con_el_archivo();
+            //probando_con_el_archivo();
+            
             // La IP es la local, el puerto es en el que el servidor esté escuchando.
             DatagramSocket socket = new DatagramSocket(puerto);
 
             // Un DatagramPacket para recibir los mensajes.
             DatagramPacket dato = new DatagramPacket(new byte[size], size);
 
-            float[] accelerometer_x_array = new float[numero_de_instancias];
-            float[] accelerometer_y_array = new float[numero_de_instancias];
-            float[] accelerometer_z_array = new float[numero_de_instancias];
-
-            long[] tiempo_de_lecturas = new long[numero_de_instancias];
-
-            float[] resultado_x = new float[2];
-            float[] resultado_y = new float[2];
-            float[] resultado_z = new float[2];
+            
 
             for (int i = 0; i < numero_de_instancias; i++) {
-                // Se recibe un dato y se escribe en pantalla.
+                
                 socket.receive(dato);
-//                   System.out.print("Recibido dato de "+ dato.getAddress().getHostName() + " : ");
+                //System.out.print("Recibido dato de "+ dato.getAddress().getHostName() + " : ");
 
                 byte[] arreglo = dato.getData();
                 tiempo_de_lecturas[i] = System.currentTimeMillis();//lectura ne milisegundos
 
-                byte[] accelerometer_x_bytes = Arrays.copyOfRange(arreglo, 4, 8);
+                byte[] accelerometer_x_bytes = Arrays.copyOfRange(arreglo, 4, 8);//4, 8
                 byte[] accelerometer_y_bytes = Arrays.copyOfRange(arreglo, 8, 12);
                 byte[] accelerometer_z_bytes = Arrays.copyOfRange(arreglo, 12, 16);
 
-                accelerometer_x_array[i] = ByteBuffer.wrap(accelerometer_x_bytes).order(ByteOrder.LITTLE_ENDIAN).getFloat();
-                accelerometer_y_array[i] = ByteBuffer.wrap(accelerometer_y_bytes).order(ByteOrder.LITTLE_ENDIAN).getFloat();
-                accelerometer_z_array[i] = ByteBuffer.wrap(accelerometer_z_bytes).order(ByteOrder.LITTLE_ENDIAN).getFloat();
+                accelerometer_x_array[i] = ByteBuffer.wrap(accelerometer_x_bytes).order(ByteOrder.LITTLE_ENDIAN).getFloat()*10f;
+                accelerometer_y_array[i] = ByteBuffer.wrap(accelerometer_y_bytes).order(ByteOrder.LITTLE_ENDIAN).getFloat()*10f;
+                accelerometer_z_array[i] = ByteBuffer.wrap(accelerometer_z_bytes).order(ByteOrder.LITTLE_ENDIAN).getFloat()*10f;
 
                 //Imprimeindo cada una de las lecturas
-                System.out.println(i + 1 + " [X=" + accelerometer_x_array[i] + "]   \t\t\t" + "[Y=" + accelerometer_y_array[i] + "]   \t\t\t" + "[Z=" + accelerometer_z_array[i] + "]\n");
-                System.out.println("Tiempo:\t" + tiempo_de_lecturas[i]);
+                System.out.println(i + 1 + " [X=" + accelerometer_x_array[i] + "]   \t\t\t" + "[Y=" + accelerometer_y_array[i] + "]   \t\t\t" + "[Z=" + accelerometer_z_array[i] + "]");
+                //System.out.println("Tiempo:\t" + tiempo_de_lecturas[i]);
             }
 
-            resultado_x = maxmin(accelerometer_x_array);
-            resultado_y = maxmin(accelerometer_y_array);
-            resultado_z = maxmin(accelerometer_z_array);
 
             //Imprimiendo los maximos y los minimos de cada eje
-            for (int i = 0; i < 2; i++) {
-                System.out.println("maximo en x: " + resultado_x[i] + " maximo en y: " + resultado_y[i] + " maximo en z: " + resultado_z[i]);
-            }
+//            for (int i = 0; i < 2; i++) {
+//                System.out.println("maximo en x: " + resultado_x[i] + " maximo en y: " + resultado_y[i] + " maximo en z: " + resultado_z[i]);
+//            }
 
             float[] bins_result_x = bins(maxmin(accelerometer_x_array), accelerometer_x_array);
             float[] bins_result_y = bins(maxmin(accelerometer_y_array), accelerometer_y_array);
             float[] bins_result_z = bins(maxmin(accelerometer_z_array), accelerometer_z_array);
 
-            System.out.println("\n\nResultados del bin en X: \n");
-            for (int k = 0; k < bins_result_x.length; k++) {
-                System.out.println(k + 1 + " = " + bins_result_x[k]);
-            }
+//            System.out.println("\n\nResultados del bin en X: \n");
+//            for (int k = 0; k < bins_result_x.length; k++) {
+//                System.out.println(k + 1 + " = " + bins_result_x[k]);
+//            }
+//
+//            System.out.println("\n\nResultados del bin en Y: \n");
+//            for (int k = 0; k < bins_result_y.length; k++) {
+//                System.out.println(k + 1 + " = " + bins_result_y[k]);
+//            }
+//
+//            System.out.println("\n\nResultados del bin en Z: \n");
+//            for (int k = 0; k < bins_result_z.length; k++) {
+//                System.out.println(k + 1 + " = " + bins_result_z[k]);
+//            }
+            
+            
+            /*
+            
+            Evaluando 
+            
+            */
+            
+            try {
 
-            System.out.println("\n\nResultados del bin en Y: \n");
-            for (int k = 0; k < bins_result_y.length; k++) {
-                System.out.println(k + 1 + " = " + bins_result_y[k]);
-            }
+                int num = 1150;                                     //Un numero cualquiera
+                Instance nueva_entrada = data.instance(num);      //Crear una copia
 
-            System.out.println("\n\nResultados del bin en Z: \n");
-            for (int k = 0; k < bins_result_z.length; k++) {
-                System.out.println(k + 1 + " = " + bins_result_z[k]);
-            }
+                
+                //Modificando los valores
+                //Agregar los valores de los bins
+                for (int i = 0; i < 10; i++) {
+                    nueva_entrada.setValue(i, bins_result_x[i]);//bins_x
+                    nueva_entrada.setValue(i + 10, bins_result_y[i]);//bins_y
+                    nueva_entrada.setValue(i + 20, bins_result_z[i]);//bins_z
+                }
+                
+                //AVG
+                nueva_entrada.setValue(30,get_avg(accelerometer_x_array));
+                nueva_entrada.setValue(31,get_avg(accelerometer_y_array));
+                nueva_entrada.setValue(32,get_avg(accelerometer_z_array));
+                        
+                //PEAK
+                nueva_entrada.setValue(33,tiempo_entre_picos(accelerometer_x_array,tiempo_de_lecturas));
+                nueva_entrada.setValue(34,tiempo_entre_picos(accelerometer_y_array,tiempo_de_lecturas));
+                nueva_entrada.setValue(35,tiempo_entre_picos(accelerometer_z_array,tiempo_de_lecturas));
+                
+                
+                //ABSOLDEV
+                nueva_entrada.setValue(36,get_avg_absolute_difference(accelerometer_x_array));
+                nueva_entrada.setValue(37,get_avg_absolute_difference(accelerometer_y_array));
+                nueva_entrada.setValue(38,get_avg_absolute_difference(accelerometer_z_array));
+                
+                //STANDDEV
+                nueva_entrada.setValue(39,get_std_deviation(accelerometer_x_array));
+                nueva_entrada.setValue(40,get_std_deviation(accelerometer_y_array));
+                nueva_entrada.setValue(41,get_std_deviation(accelerometer_z_array));
+                
+                
+                //RESULTANT
+                nueva_entrada.setValue(42,get_avg_resultant_acceleration(accelerometer_x_array,accelerometer_y_array,accelerometer_z_array));
+             
+              
+                double clsLabel = tree.classifyInstance(nueva_entrada); // Clasificando una nueva instancia
+                String resultado_clasificasion = data.classAttribute().value((int) clsLabel);
+                
+                System.out.println("\n\n\n[resultado = "+resultado_clasificasion+"]");
+                
 
+            } catch (Exception e) {
+                e.printStackTrace();
+                //System.out.println("Error al clasificar");
+            }
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -122,7 +185,6 @@ public class Proyecto_final_mineria {
        
        float rango = (rango_maxmin[0]-(rango_maxmin[1]))/10;
        
-       System.out.println("rango = "+rango);
        
        for(int i=0;i<lecturas_del_eje.length;i++){
            for(int j=0;j<10;j++){
@@ -147,46 +209,71 @@ public class Proyecto_final_mineria {
        return bins; 
    }
    
-   public static float tiempo_entre_picos(float[] lecturas_del_eje,long[] tiempos)
-   {
+   public static float tiempo_entre_picos(float[] lecturas_del_eje,long[] tiempos){
+       //System.out.println("llamo la maldita funcion");
        long resultado = 0;
-       int iteraciones_umbral= 0;
-       
-       float[] extremos = maxmin(lecturas_del_eje);
-       float variacion_de_umbral = extremos[0]*0.10f;
-       
        List indices_de_picos_dentro_del_umbral = new LinkedList();
        
-       for(float umbral =(extremos[0]-variacion_de_umbral) ; umbral >= extremos[1] ; umbral -= variacion_de_umbral ){
+       float[] extremos = maxmin(lecturas_del_eje);
+       float factor = 0.10f;
+       
+       
+       float variacion_de_umbral = extremos[0]*factor;
+       
+       if(variacion_de_umbral<0) variacion_de_umbral *= -1;//hace que siempre sea positivo
+       
+       //System.out.println("[Mayor = "+extremos[0]+", Variacion umbral"+variacion_de_umbral+"]\n\n");
+       
+       for(float umbral =(extremos[0]-variacion_de_umbral) ; umbral >= extremos[1] ;  ){
            
+           //System.out.println("--->valor de l umbra = "+umbral+"]");
            for(int j=0;j<lecturas_del_eje.length;j++){ // j indice de los valores de los tiempos 
                
-               if(lecturas_del_eje[j] >= umbral /*&& !indices_de_picos_dentro_del_umbral.contains(j)*/)
+               if(lecturas_del_eje[j] >= umbral )
                    indices_de_picos_dentro_del_umbral.add(j);//Se encontró un valor mayor al umbra, añadie el indice a la lista
             }
-           
-           iteraciones_umbral++;
            
            if(indices_de_picos_dentro_del_umbral.size() >= 3)//si la lista contiene por lo menos 3 valores mayores al umbral, pasar al siguiente paso
                break;
            else
                indices_de_picos_dentro_del_umbral.clear();//borrar los valores, para que entre de izquierda a derecha
+           
+           
+           factor += 0.01f;
+           variacion_de_umbral = extremos[0]*factor;
+           
+           if(extremos[0]>=0)
+               umbral = (extremos[0]-variacion_de_umbral);
+           else
+               umbral = (extremos[0]+variacion_de_umbral);
+           
+           
+//           if( umbral >=0 && variacion_de_umbral>0 )//    + +
+//               umbral -= variacion_de_umbral;
+//           else if( umbral>0 && variacion_de_umbral<0 )// + -
+//               umbral += variacion_de_umbral;
+//           else if( umbral<0 && variacion_de_umbral>0 )// - +
+//               umbral -= variacion_de_umbral;
+//           else if( umbral<0 && variacion_de_umbral<0 )// - -
+//               umbral += variacion_de_umbral;
        }
        
-       int[] indices = new int[indices_de_picos_dentro_del_umbral.size()];
+       if(indices_de_picos_dentro_del_umbral.isEmpty())
+           return 0.0f;
        
+       int[] indices = new int[indices_de_picos_dentro_del_umbral.size()];
+       System.out.println("----------------------");
        //sacando los indices de la lista y convirtiendolos en un arrelgo de enteros
        for (int i = 0; i <indices_de_picos_dentro_del_umbral.size() ; i++) {
            indices[i] = Integer.parseInt(indices_de_picos_dentro_del_umbral.get(i).toString());
-           System.out.println("---->"+indices[i]);//Probando
+           System.out.println(indices[i]);
        }
-       
+       System.out.println("----------------------");
        for(int i=0;i<indices.length-1;i++)
            resultado += (tiempos[indices[i+1]]-tiempos[indices[i]]);//siguiente - actual
        
-       resultado /= (indices.length)*1000000;//dividiendo entre el numero de picos
-          
-       System.out.println("Debuging");
+       resultado /= indices.length;//*1000000;//dividiendo entre el numero de picos
+       //System.out.println("valor pico = "+resultado);   
        return resultado;
    }
 
@@ -350,18 +437,44 @@ public class Proyecto_final_mineria {
         float pico_Y = tiempo_entre_picos(accelerometer_y,tiempos);
         float pico_Z = tiempo_entre_picos(accelerometer_z,tiempos);
         
-        float std_deviation_x = get_std_deviation(accelerometer_x);
-        float std_deviation_y = get_std_deviation(accelerometer_y);
-        float std_deviation_z = get_std_deviation(accelerometer_z);
-        
         float avg_absolute_diff_X = get_avg_absolute_difference(accelerometer_x);
         float avg_absolute_diff_Y = get_avg_absolute_difference(accelerometer_y);
         float avg_absolute_diff_Z = get_avg_absolute_difference(accelerometer_z);
+        
+        float std_deviation_x = get_std_deviation(accelerometer_x);
+        float std_deviation_y = get_std_deviation(accelerometer_y);
+        float std_deviation_z = get_std_deviation(accelerometer_z);
                 
         float avg_resultant = get_avg_resultant_acceleration(accelerometer_x,accelerometer_y,accelerometer_z);
         
         System.out.println("Debe funcionar!");
         
+    }
+   
+    public static void inicializando_weka() {
+
+        //Inicializando los objetos de weka
+        try {
+
+            reader = new BufferedReader(new FileReader("WISDM_ar_v1.1_transformed.arff"));
+            data = new Instances(reader);
+            reader.close();
+            
+            // especificando el atributo de clase
+            data.setClassIndex(data.numAttributes() - 1);
+
+            String[] options = new String[1];
+            options[0] = "-U";            // unpruned tree
+            tree = new J48();         // new instance of tree
+            tree.setOptions(options);     // set the options
+            tree.buildClassifier(data);   // build classifier
+
+        } catch (Exception e) {
+            System.out.println("Error inicializando los objetos de weka");
+        }
+        
+        System.out.println("Weka inicio bien");
+
     }
     
     
